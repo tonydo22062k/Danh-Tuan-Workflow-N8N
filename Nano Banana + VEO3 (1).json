@@ -1,0 +1,1015 @@
+{
+  "name": "Nano Banana + VEO3",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Get the base64 string from the specific path\nlet base64String = $input.first().json.choices[0].message.images[0].image_url.url;\n\n// Remove the data URI prefix if it exists\nif (base64String.startsWith('data:image/')) {\n  // Find the comma that separates the prefix from the actual base64 data\n  const commaIndex = base64String.indexOf(',');\n  if (commaIndex !== -1) {\n    base64String = base64String.substring(commaIndex + 1);\n  }\n}\n\nreturn [{\n  json: {\n    base64_data: base64String\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3744,
+        144
+      ],
+      "id": "1607f639-8fd5-43de-89cc-9c2271a5d0c3",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64_data",
+        "options": {
+          "fileName": "generated_image",
+          "mimeType": "image/png"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -3520,
+        144
+      ],
+      "id": "d326585b-c0f7-40f9-a395-1739485e919c",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-2.5-flash-image-preview:free\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{{ $('Send message and wait for response').item.json.data.text }}. Photorealistic for a UGC ad. square ratio.\"\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": \"https://api.telegram.org/file/bot{{ $('Edit Fields').item.json.telegram_token }}/{{ $json.result.file_path }}\"\n          }\n        }\n      ]\n    }\n  ]\n  \n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3968,
+        144
+      ],
+      "id": "0ec8dedb-0458-45bb-8b7e-3387ba2c52d5",
+      "name": "HTTP Request",
+      "credentials": {
+        "openRouterApi": {
+          "id": "b5EGBm0ExO2WxA6B",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -3984,
+        -96
+      ],
+      "id": "eaab2e9f-d7ff-4475-953f-82308a8030af",
+      "name": "Telegram Trigger",
+      "webhookId": "c578267b-4fca-49f6-a52f-bd354bd4e4f4",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "daaeed7f-da2b-4c9a-a33e-d78c619e93cc",
+              "name": "telegram_token",
+              "value": "$API_TELEGRAM",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3728,
+        -96
+      ],
+      "id": "0dfb6f1e-0cbb-4763-952d-c60685c8a961",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "message": "Thanks for uploading the image. Please provide instructions.",
+        "responseType": "freeText",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3488,
+        -96
+      ],
+      "id": "65323867-81d0-4456-97cc-0831da227436",
+      "name": "Send message and wait for response",
+      "webhookId": "4ee08df4-d0e9-4d2f-81f9-d7e38d9b17cb",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Telegram Trigger').item.json.message.photo[2].file_id }}",
+        "download": false
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3264,
+        -96
+      ],
+      "id": "a88bf4fa-4532-4448-ab96-08176c4e21b4",
+      "name": "Get a file",
+      "webhookId": "13857ee5-781f-4e1c-9416-aad416df72ac",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3264,
+        144
+      ],
+      "id": "f9bce1b1-471b-484d-bfb7-fe143c314e69",
+      "name": "Send a photo message",
+      "webhookId": "22be872e-27aa-420b-be32-265ca6271a49",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "message": "Please provide a dialog idea for your ad.",
+        "responseType": "freeText",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2448,
+        -208
+      ],
+      "id": "131fb950-88bb-423f-a1dc-ed204246aa10",
+      "name": "Send message and wait for response1",
+      "webhookId": "1739c0ea-8542-41df-8717-694446f2196d",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Đây là những gì tôi đang tìm kiếm: {{ $json.data.text }}\n\nĐây là nội dung trong hình ảnh ban đầu sẽ được sử dụng để tạo video:\n\n{{ $('HTTP Request3').item.json.choices[0].message.content }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Bạn là chuyên gia trong việc tạo kịch bản cho các quảng cáo theo phong cách UGC chân thực, tự nhiên và không theo kịch bản.\n\nCông việc của bạn là tạo kịch bản video gồm 2 đoạn dựa trên ý tưởng của người dùng. Video bắt đầu bằng hình ảnh được cung cấp.\n\nCÁC RÀNG BUỘC QUAN TRỌNG:\n- KHÔNG thêm các vật thể không có trong ảnh gốc (không có đồ ăn, đạo cụ, dụng cụ, v.v.)\n- KHÔNG xóa các vật thể có trong ảnh gốc\n- Người đó chỉ được tương tác với các vật thể/yếu tố hiển thị trong ảnh gốc\n- Các hành động phải khả thi về mặt vật lý dựa trên vị trí bắt đầu và môi trường xung quanh của người đó\n- Không thêm văn bản hoặc chú thích\n\nYÊU CẦU:\n- Mỗi phân đoạn nên có 7-8 giây hành động/đối thoại thực tế\n- Bao gồm chuyển động máy quay nếu nó làm tăng tính kể chuyện (phóng to, xoay, nghiêng, v.v.)\n- Các hành động phải cụ thể và có thể quay phim được\n- Đối thoại phải nghe như đang trò chuyện và không theo kịch bản\n- Thể hiện chứ không kể lể - các hành động phải thể hiện trực quan lợi ích của sản phẩm\n- Sử dụng dấu ngoặc đơn cho bất kỳ đoạn hội thoại nào\n- Giữ tính chân thực - tránh ngôn ngữ quảng cáo quá mức\n\nBối cảnh hình ảnh sẽ được cung cấp để hướng dẫn những gì thực sự hiển thị và khả thi.\n\nĐịnh dạng đầu ra:\n{\n\"segment-1\": \"[chuyển động máy quay nếu cần] + [hành động cụ thể chỉ sử dụng các yếu tố hiển thị] + [lời thoại tự nhiên nếu có]\",\n\"segment-2\": \"[chuyển động máy quay nếu cần] + [hành động cụ thể chỉ sử dụng các yếu tố hiển thị] + [lời thoại tự nhiên nếu có]\"\n}\n\nVí dụ chuyển động máy quay: máy quay từ từ phóng to, máy quay lia sang trái để theo dõi, máy quay nghiêng lên, máy quay lùi lại\nVí dụ hành động bị ràng buộc: điều chỉnh dây đeo có thể nhìn thấy, chuyển trọng lượng lên bề mặt có thể nhìn thấy, quay về phía máy quay, cử chỉ bằng tay tự do"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -2816,
+        64
+      ],
+      "id": "1f5ba3ab-1969-4b75-9f2f-0fe12b73408a",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\"segment-1\": \"the man tugs his sleeve and describes how elastic the fabric is\",\n\"segment-2\": \"the man raises his arms to stretch, and the shirt flows with his movements\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -2576,
+        240
+      ],
+      "id": "a9d6cd4e-4efb-419e-8bb0-7ad7e2092f0f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -2432,
+        64
+      ],
+      "id": "20fd9406-b64e-4890-8f3a-83bc0961a224",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.output }}\",\n  \"imageUrls\": [\n    \"https://api.telegram.org/file/bot{{ $('Edit Fields').item.json.telegram_token }}/{{ $('Get a file1').item.json.result.file_path }}\"\n  ],\n  \"model\": \"veo3_fast\",\n  \"aspectRatio\": \"9:16\",\n  \"seeds\": 12345,\n  \"enableFallback\": false\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2016,
+        -80
+      ],
+      "id": "c115b3db-bbf0-41f9-8cc7-adbfc521845b",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Hh1odKYgIhPoCdsI",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.result.photo[3].file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2848,
+        -208
+      ],
+      "id": "101dfcc1-7fe4-49c4-aa44-18642c778653",
+      "name": "Get a file1",
+      "webhookId": "2bc7bf68-ed5a-41e8-a377-c971fcbf7dd2",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1808,
+        -80
+      ],
+      "id": "6c98e85c-2630-455f-a7cd-0766b7bf8313",
+      "name": "Wait",
+      "webhookId": "41f3bf3a-fc54-4162-99c9-2b37a06adcb0"
+    },
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/veo/record-info",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1600,
+        -80
+      ],
+      "id": "0eb9ff57-955c-42af-9df7-156a4a55e658",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Hh1odKYgIhPoCdsI",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "data.response.resultUrls"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -1136,
+        -112
+      ],
+      "id": "ce0ab3ed-7311-490c-a537-71e4943e48ad",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "videoSources": {
+          "sources": [
+            {
+              "value": "={{ $json.resultUrls[0][0] }}"
+            },
+            {
+              "value": "={{ $json.resultUrls[0][0] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-mediafx.mediaFX",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        -272
+      ],
+      "id": "31eda735-b850-4919-aa8a-4f5d7a22d377",
+      "name": "Merge video"
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        -272
+      ],
+      "id": "0e012517-e3f3-48cc-8691-e6198970c63c",
+      "name": "Send a video",
+      "webhookId": "bce3aa2c-b445-40a7-a9e1-36388cbb33e9",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "f29a6ac3-9fb2-44a7-ba55-b1b82b42b0bd"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Success"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "490fc789-6e8c-423e-b13e-7b1610aa79e9",
+                    "leftValue": "={{ $json.data.successFlag }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "In Process"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1408,
+        -96
+      ],
+      "id": "1e9e81fb-8268-4fa0-a0e4-8797880ebe08",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Video generation failed",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1136,
+        208
+      ],
+      "id": "6ced863b-bdd9-4f0f-964e-3a579abb6b15",
+      "name": "Send a text message",
+      "webhookId": "e00c2c2c-533f-4ca4-bd03-3a7760f2524f",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "=POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-2.5-flash-image-preview:free\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Provide a detailed description of what's in the image. The setting, the subject(s), what the subject is doing/holding, etc\"\n        },\n        {\n          \"type\": \"image_url\",\n          \"image_url\": {\n            \"url\": \"https://api.telegram.org/file/bot{{ $('Edit Fields').item.json.telegram_token }}/{{ $json.result.file_path }}\"\n          }\n        }\n      ]\n    }\n  ]\n  \n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2656,
+        -208
+      ],
+      "id": "a920215b-a1a1-45db-8eb6-589932bd4dd9",
+      "name": "HTTP Request3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "b5EGBm0ExO2WxA6B",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Generate Image",
+        "height": 512,
+        "width": 1024
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -4080,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "b16aff9f-a2e7-46fe-82b7-2e1e2ca6a24f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Video Generation Prompts",
+        "height": 928,
+        "width": 832,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3008,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "9238c8a4-66a5-4e13-b6ec-6fbba4ce7f31",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Generate and output video",
+        "height": 752,
+        "width": 1936
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2080,
+        -336
+      ],
+      "typeVersion": 1,
+      "id": "9598a0af-8a9f-4e5f-9dfb-0c8763cb75d4",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini-2025-04-14",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini-2025-04-14"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -2912,
+        240
+      ],
+      "id": "f4e93fde-5fba-43cb-afde-852fb3a045f9",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "D08ChqKQreTPBOSN",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "writer",
+            "type": "anyone",
+            "allowFileDiscovery": true
+          }
+        },
+        "options": {}
+      },
+      "id": "d79d2bc3-9220-4326-9621-b97d15420f64",
+      "name": "Set Permissions",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        -464,
+        -16
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KuL2Ozc50x1fl8jC",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "=POV-{{ $('Wait').item.json.data.taskId }}.mp4",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1wPx-gk3f4ylb3hi4VQloKav9h5cRXm4B",
+          "mode": "list",
+          "cachedResultName": "Product Ads",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1wPx-gk3f4ylb3hi4VQloKav9h5cRXm4B"
+        },
+        "options": {}
+      },
+      "id": "dc722ced-0052-4f34-8a53-f17a280b2b45",
+      "name": "Upload Final Video",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        -672,
+        -16
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KuL2Ozc50x1fl8jC",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.resultUrls[0][0] }}\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "a2cc58f4-e897-4308-be63-b2a85b6d4652",
+      "name": "Get Raw File",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -880,
+        -16
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        176
+      ],
+      "id": "abff2af2-d5c5-401a-8315-82bcd62f2971",
+      "name": "Send a video1",
+      "webhookId": "bce3aa2c-b445-40a7-a9e1-36388cbb33e9",
+      "credentials": {
+        "telegramApi": {
+          "id": "83tSV2KPNzJvkwVU",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Hướng Dẫn Cài Đặt Workflow Nano Banana + Veo3\n\nTác giả: Danh Tuấn\n\nLàm theo các bước dưới đây để thiết lập workflow kết hợp Nano Banana (tạo ảnh) và Veo3 (tạo video), cùng tính năng upload video tự động lên Google Drive.\n\nBước 1: Cài đặt Node Telegram\n- Truy cập: @BotFather\n- Tạo Telegram Bot và lấy Bot Token.\n- Dán token này vào node Edit Fields trong n8n.\n\nBước 2: Setup Node Edit Field\n- Mở node Edit Fields.\n- Nhớ dán token Telegram Bot vừa tạo vào field telegram_token.\n\nBước 3: Setup Node Nano Banana\n- Truy cập: https://openrouter.ai/google/gemini-2.5-flash-image-preview:free\n- Đăng ký tài khoản & tạo API Key.\n- Dán API Key vào credential của các node:\n+) HTTP Request\n+) HTTP Request3\n\nBước 4: Cài đặt Node Veo3 Kie AI\n- Truy cập: https://kie.ai/api-key\n- Tạo API Key.\n- Dán API Key vào credential của các node:\n+) HTTP Request1\n+) HTTP Request2\n\nBước 5: Setup Node Google Drive\n- Vào: https://console.cloud.google.com/\n- Tạo Project mới.\n- Bật Google Drive API.\n- Tạo OAuth 2.0 credentials.\n- Dán credentials vào node Google Drive trong n8n.\n\nBước 6: Kết nối Chatgpt API\n- Link: https://platform.openai.com/settings/organization/billing/overview\n- Add to credit balance => xác nhận mức muốn mua 5$-99$ => adđ thẻ visa => thanh toán\n\nBước 7: Cài đặt Node Merge Video\n- Đầu tiên self-host n8n với Tino: https://tino.vn?php=4101\n- Xem video hướng dẫn chi tiết self-host n8n từ A-Z: https://www.youtube.com/watch?v=sZQwrXgxUWc\n- Vào menu Settings n8n → Community Nodes.\n- Gõ n8n-nodes-mediafx và cài đặt.\n\n✅ Hoàn Tất\nBây giờ chị đã có thể gửi ảnh sản phẩm, nhập ý tưởng kịch bản, workflow sẽ tự động tạo influencer bằng Nano Banana → render video với Veo3 → gửi kết quả về Telegram và lưu trên Google Drive.",
+        "height": 1088,
+        "width": 672
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4912,
+        -448
+      ],
+      "id": "32cc1ede-5493-450b-acb9-4136852d62c2",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Send a photo message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a photo message": {
+      "main": [
+        [
+          {
+            "node": "Get a file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Merge video",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Raw File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge video": {
+      "main": [
+        [
+          {
+            "node": "Send a video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Final Video": {
+      "main": [
+        [
+          {
+            "node": "Set Permissions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Raw File": {
+      "main": [
+        [
+          {
+            "node": "Upload Final Video",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3a09d74f-08d9-40d8-a768-68314fea8977",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6d61497b578f9fa268e2c626f3da87bcbe795259ad06a17419fe0c7f7c72f4a"
+  },
+  "id": "oBJaPbaLqUDJmSmj",
+  "tags": []
+}
