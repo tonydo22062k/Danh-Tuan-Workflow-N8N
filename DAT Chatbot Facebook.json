@@ -1,0 +1,1029 @@
+{
+  "name": "DAT Chatbot Facebook",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c02b2324-96a4-45bd-835f-2a2ecdfcea56",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "af0edc5d-8475-45aa-bce1-0f2b992207c2",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "rightValue": "n8n-abc",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        -144
+      ],
+      "id": "384e3085-e60b-4881-bcca-5f334be6e79d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -32,
+        -320
+      ],
+      "id": "99f73d3a-9e16-4ccf-8b3b-b905162cf04f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**Nội dung khách hàng hỏi:**\n{{ $('Set').item.json.message }}\n\n**ID của user:**\n{{ $('Set').item.json.psid }}",
+        "options": {
+          "systemMessage": "=## Overview:\nBạn là Trợ lý AI chuyên nghiệp và lịch sự của \"ĐỂ AI TÍNH\". Nhiệm vụ của bạn là hỗ trợ khách hàng và cung cấp thông tin về các dịch vụ.\n\n## Công cụ:\n- 'thongtin': Chứa câu hỏi và câu trả lời mẫu\n- 'AItool': Chứa thông tin về công cụ AI, mô tả về AI và link affiliate của AI\n- 'add_id': Dùng để thêm ID của khách hàng trên page\n- 'them_lich_hen': Dùng để tạo lịch hẹn cho khách hàng\n\nQUY TẮC BẮT BUỘC:\n\nTrước khi đưa ra phản hồi, LUÔN LUÔN gọi công cụ 'add_id' đầu tiên để kiểm tra và thêm thông tin của khách hàng\n\n1.  **Dùng Tool (thongtin):** Bạn PHẢI sử dụng công cụ \"thongtin\" (đọc file sheet) **ít nhất một lần** trong mỗi cuộc trò chuyện trước khi đưa ra bất kỳ câu trả lời nào, để đảm bảo thông tin luôn được cập nhật và chính xác.\n\n2.  **Xử lý Câu hỏi (Cột TRẢ LỜI):**\n    * Sau khi đọc file sheet \"thongtin\", hãy bám sát nội dung ở **Cột B (TRẢ LỜI)** tương ứng với câu hỏi của khách hàng (Cột A - CÂU HỎI) để trả lời.\n    * Nếu khách hàng hỏi về một dịch vụ (ví dụ: \"Tư vấn 1-1\", \"Workflow miễn phí\", \"Mua workflow\"), hãy tìm và cung cấp thông tin chi tiết từ file sheet.\n    * Nếu không tìm thấy thông tin liên quan trong file sheet, hãy trả lời: \"Hiện tại, tôi chưa có thông tin chi tiết về vấn đề này trong tài liệu của ĐỂ AI TÍNH. Bạn có thể hỏi về các dịch vụ khác như Tư vấn 1-1, xin prompt hoặc mua Workflow nhé.\"\n\n3.  **Tư vấn Dịch vụ:** Bất kể câu hỏi của khách hàng là gì, câu trả lời đầu tiên (hoặc sau khi cung cấp thông tin chi tiết) **PHẢI** kết thúc bằng lời tư vấn này:\n\n    --------------------\n\n    Mình gửi bạn một số dịch vụ của ĐỂ AI Tính nhé:\n    1. Tư vấn 1-1\n    2. Xin prompt/câu lệnh\n    3. Mua workflow\n\n    Bạn có nhu cầu sử dụng dịch vụ nào thì có thể nhấn số (1, 2, 3, 4, hoặc 5) để mình tư vấn sâu hơn nhé.\n\n    --------------------\n\nNhớ để câu này trong \"----------\" để dễ phân biệt với câu trả lời trước đó\n\n4.  **Xử lý Prompt/Câu lệnh (Mục 4):** Nếu khách hàng yêu cầu \"Xin prompt\" (hoặc \"Câu lệnh\"), bạn không dùng file sheet. Thay vào đó, bạn **tự tư duy và tạo ra một câu lệnh bằng tiếng Anh** phù hợp với ngữ cảnh yêu cầu của khách hàng (nếu có) hoặc một câu lệnh AI thông dụng (nếu khách hàng hỏi chung chung).\n\n5.  **Ngữ điệu:** Luôn trả lời bằng giọng điệu lịch sự, chuyên nghiệp và thân thiện.\n\n6. Khi khách hàng hỏi về tool AI hoặc tham khảo tool AI để phục vụ cho công việc của họ. Thì bạn phải đọc file sheet *AItool* ít nhất 1 lần trước khi trả lời. Câu trả lời của bạn sẽ bao gồm: Tên AI Tool + Tính năng của AI đó(Tạo ảnh/Tạo video/....) + Link affiliate của tool AI đó. Hãy trả lời một cách ngắn gọn, không quá 500 ký tự về các công cụ tạo video/ảnh bằng AI, chỉ liệt kê tên công cụ và một đường link liên kết ngắn gọn. Chỉ liệt kê 2-3 công cụ AI thôi. Kết quả trả về phải theo format sau ví dụ: \nKling AI(Tạo ảnh): [Link affiliate của Kling AI bạn lấy được]\n\n7. Khi khách hàng hỏi về khóa học thì trả lời: \nHiện Để AI Tính chưa cho khó học nào. Để biết thêm kiến thức về AI bạn có thể tham khảo:\n- TikTok ĐỂ AI Tính(Chia sẻ kiến thức về AI, những tool AI để phục vụ công việc của bạn): https://www.tiktok.com/@deaitinh\n- Youtube Danh Tuấn AAA(Chia sẻ kiến thức về AI Automation - AI tự đông hóa): https://www.youtube.com/@tuanAAA247/videos\n\n9. **Khi khách hàng muốn Tư vấn 1-1, thì trả lời dựa vào trông tin sau: **\n- Mô tả: Tư vấn 1-1 cho doanh nghiệp chuyển đổi số về AI hoặc áp dụng AI cho công việc\n- Hình thức: Chia sẻ qua zoom\n- Giá: 599,000 vnđ/giờ\n\nHỏi khách hàng có đồng ý không thì mới thực hiện những bước dưới để đặt lịch tư vấn. Còn nếu khách hàng từ chối thì thôi.\n\n\n** Khi user cần đặt lịch về tư vấn 1-1 về AI, hãy hỏi các thông tin sau: **\n- Ngày hẹn\n- Giờ hẹn\n- SĐT của KH\n- Tên khách hàng\n- Lưu ý khác\n(Trong đó 4 trường đầu tiên là bắt buộc)\n\n**Lưu ý**:\n- Nếu user chưa cung cấp đủ thông tin(ngày hẹn, giờ hẹn, số điện thoại, tên), hướng dẫn user bổ sung thêm 1 cách lịch sự.\n- Nếu user đã cung cấp đủ thông tin, giới thiệu toàn bộ các thông tin trên lại để user kiểm tra và xác nhận. Gợi ý nhập 'ok' để xác nhận.\n- Nếu user yêu cầu chỉnh sửa, hỗ trợ điều chỉnh thông tin lịch hẹn và gửi lại để user kiểm tra và xác nhận.\n- Nếu user nhấn 'ok' (hoặc các text có ngữ cảnh tương tự), gọi công cụ `them_lich_hen` để gửi thông tin. Sau đó user đã thêm lịch thành công, sẽ sớm có nhân viên liên hệ."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        -480
+      ],
+      "id": "4d18cea8-20a0-4159-bc42-1e29e49a2fb4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        -240
+      ],
+      "id": "406debc9-842a-4df2-8b2c-67d944a9513e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "WtAhqJPB5rKb7BgY",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YYylGa_joHVKU5kApiBPBcXuV_9fM2JdnZeslc1rhVU",
+          "mode": "list",
+          "cachedResultName": "ĐỂ AI TÍNH THÔNG TIN",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YYylGa_joHVKU5kApiBPBcXuV_9fM2JdnZeslc1rhVU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "cau_hoi_thuong_gap",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YYylGa_joHVKU5kApiBPBcXuV_9fM2JdnZeslc1rhVU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1760,
+        -240
+      ],
+      "id": "f8db05d9-823f-4414-a081-46dcd0bc434f",
+      "name": "thongtin",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h8UrcLE56nEaRhWr",
+          "name": "Google Sheets DAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v24.0/{{ $('Webhook').item.json.body.entry[0].messaging[0].recipient.id }}/messages?access_token=[access_token]",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Webhook').item.json.body.entry[0].messaging[0].sender.id }}\"\n  },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"text\": {{ JSON.stringify($json.output) }}\n  }\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        -480
+      ],
+      "id": "65ea64ea-7b16-4f79-b573-0e74aefb26b3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Iq8dBuLuoOkGIPLrBBYdA4chfAWrKkHucJ7lJlfcC34",
+          "mode": "list",
+          "cachedResultName": "TỔNG HỢP DỰ ÁN ĐỂ AI TÍNH",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Iq8dBuLuoOkGIPLrBBYdA4chfAWrKkHucJ7lJlfcC34/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 854742102,
+          "mode": "list",
+          "cachedResultName": "Facebook Affiliate Post",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Iq8dBuLuoOkGIPLrBBYdA4chfAWrKkHucJ7lJlfcC34/edit#gid=854742102"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1920,
+        -240
+      ],
+      "id": "dbca0ee6-4b63-43fc-8b64-61874bb72c9d",
+      "name": "AItool",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h8UrcLE56nEaRhWr",
+          "name": "Google Sheets DAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "99a72f1d-d6af-44d0-9e59-6cef1697b654",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -560,
+        48
+      ],
+      "id": "8f5f4dd5-4028-452b-8fed-63046c68bb17",
+      "name": "Webhook",
+      "webhookId": "99a72f1d-d6af-44d0-9e59-6cef1697b654"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2170a894-c47e-484b-8a00-175dcce2c26a",
+              "name": "access_token",
+              "value": "EAAQmAsd9ZB8kBP3b32rO5PNngE6ZBgyI0rYTUhMr2Fop4dj4GecwZBXq0Qgdxf8MZA9YjzpqEyxDbElKP1l9OMnV3X5bLADkHQoJyvtHGFwWbjiclldIgTMdsm6WgG6TmZB7pcqPr5gZCL4W9qxZCqrxDiGM866f1yFBIR5RBZBsl3Nntt72H5aD3ZCe3IMkjdZALGm2em",
+              "type": "string"
+            },
+            {
+              "id": "36110849-6586-4129-8394-1d8638df0440",
+              "name": "page_id",
+              "value": "={{ $('RECEIVED').item.json.body.entry[0].messaging[0].sender.id }}",
+              "type": "string"
+            },
+            {
+              "id": "230d69f2-3a2d-47ac-88c3-77281673ff28",
+              "name": "psid",
+              "value": "={{ $('RECEIVED').item.json.body.entry[0].messaging[0].recipient.id }}",
+              "type": "string"
+            },
+            {
+              "id": "5470e7cd-20ad-4054-8d64-b0c2ac34e7f9",
+              "name": "message",
+              "value": "={{ $('RECEIVED').item.json.body.entry[0].messaging[0].message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        -160
+      ],
+      "id": "e60488c2-1cfe-4222-8a09-bdaebc425a2a",
+      "name": "Set"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "124d9c1d-b395-458e-a7f1-b919981f5932",
+              "leftValue": "={{ $(\"Set\").item.json.message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        -160
+      ],
+      "id": "c5eb6643-843e-43d6-963f-f09f85c12f60",
+      "name": "If1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        192
+      ],
+      "id": "7dd18bc8-4357-4716-bcba-19d0e050b8c5",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.psid }}-{{ $now.format('ddMMyyyy') }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1520,
+        -240
+      ],
+      "id": "1a6c7987-9de2-4b70-80ad-597a4ecc9230",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "mprtRYDLivLygHVM",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Gọi công cụ này để thêm thoongtin khách hàng ào google sheet",
+        "workflowId": {
+          "__rl": true,
+          "value": "sQeg9eUkCw5aJOlF",
+          "mode": "list",
+          "cachedResultName": "Quản Lý ID Khách Hàng"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "psid": "={{ $('If1').item.json.psid }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "psid",
+              "displayName": "psid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2080,
+        -240
+      ],
+      "id": "d2398792-b8bc-49b0-bb00-322c19692202",
+      "name": "add_id"
+    },
+    {
+      "parameters": {
+        "description": "Dùng để thêm lịch hẹn của khách vào google sheet",
+        "workflowId": {
+          "__rl": true,
+          "value": "oxfep5lw1ZfZxLav",
+          "mode": "list",
+          "cachedResultName": "Thêm Lịch Hẹn"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('date', `Ngày khách hàng muốn đặt lịch`, 'string') }}",
+            "time": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('time', `Khung giờ khách hàng muốn đặt lịch`, 'string') }}",
+            "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('phone', `SĐT của khách hàng`, 'string') }}",
+            "service": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('service', `Dịch vụ khách hàng muốn sử dụng`, 'string') }}",
+            "note": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('note', `Những lưu ý khác từ khách hàng`, 'string') }}",
+            "psid": "={{ $('Set').item.json.psid }}",
+            "name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('name', `Tên của khách hàng`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "service",
+              "displayName": "service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "psid",
+              "displayName": "psid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2304,
+        -240
+      ],
+      "id": "e173cda0-308c-4d87-8ff5-8da180b73fac",
+      "name": "them_lich_hen"
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        192
+      ],
+      "id": "e427ee24-7e03-496b-907c-b3357cda44c1",
+      "name": "RECEIVED",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "413036d5-0686-46d6-8f88-4433eef31916",
+              "leftValue": "={{ $json.body.entry[0].messaging[0].message.app_id }}",
+              "rightValue": 1406169614227268,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        624
+      ],
+      "id": "a7cb2960-6438-4afb-9c11-ce99ffd9ad0a",
+      "name": "Check  Human"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        848,
+        832
+      ],
+      "id": "9009fab7-c072-4cf8-9a76-d6a27362e215",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus",
+          "mode": "list",
+          "cachedResultName": "Whitelist",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Trang tính1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "psid",
+              "lookupValue": "={{ $json.body.entry[0].messaging[0].recipient.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        608
+      ],
+      "id": "f7040502-00d8-4900-9586-fd71e7554d61",
+      "name": "Check Past ID",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h8UrcLE56nEaRhWr",
+          "name": "Google Sheets DAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3c038c88-9765-4ae4-9f11-a41e1be6daa2",
+              "leftValue": "={{ $('Check Past ID').item.json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        608
+      ],
+      "id": "73dd0dd2-6e42-4534-a7a8-6d920aa5007e",
+      "name": "ID KH Chưa Được Add"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus",
+          "mode": "list",
+          "cachedResultName": "Whitelist",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Trang tính1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "psid": "={{ $('Check  Human').item.json.body.entry[0].messaging[0].recipient.id }}"
+          },
+          "matchingColumns": [
+            "psid"
+          ],
+          "schema": [
+            {
+              "id": "psid",
+              "displayName": "psid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1376,
+        512
+      ],
+      "id": "1bf8e8a6-5d28-4126-925f-aa32ce8065b6",
+      "name": "Add Thông Tin KH vào Whitelist",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h8UrcLE56nEaRhWr",
+          "name": "Google Sheets DAT"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        720
+      ],
+      "id": "60626899-170d-4644-8595-a892e0fa31f2",
+      "name": "No Operation, do nothing2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cd1147f7-3ef7-4e05-ac64-b045c33ca114",
+              "leftValue": "={{ $json.body.entry[0].messaging[0].sender.id }}",
+              "rightValue": "=1331327733660202",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        192
+      ],
+      "id": "d2d808db-66c8-49aa-9ec9-2b570c807e4c",
+      "name": "Không phải do Fanpage Rep?"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus",
+          "mode": "list",
+          "cachedResultName": "Whitelist",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Trang tính1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RshKI8EtI2oSSns2WAqUXGaNBNvH8DTQvN_Nh6_qSus/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "psid",
+              "lookupValue": "={{ $json.body.entry[0].messaging[0].sender.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        64
+      ],
+      "id": "e506b171-75d4-46eb-92d2-e313f52e0566",
+      "name": "Kiểm Tra Whitelist",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "h8UrcLE56nEaRhWr",
+          "name": "Google Sheets DAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bfb8e3bf-c92e-46d4-b9d3-b276f3ef5d20",
+              "leftValue": "={{ $('Kiểm Tra Whitelist').item.json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        64
+      ],
+      "id": "67acbc39-bc82-4916-94f0-6a38d0983b3c",
+      "name": "KH Này Không Ở Trong Whitelist"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        816,
+        224
+      ],
+      "id": "a9166cac-d679-40d3-ab65-6f68e4dad6f9",
+      "name": "No Operation, do nothing3"
+    }
+  ],
+  "pinData": {
+    "Webhook": []
+  },
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "thongtin": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AItool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RECEIVED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_id": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "them_lich_hen": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RECEIVED": {
+      "main": [
+        [
+          {
+            "node": "Không phải do Fanpage Rep?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check  Human": {
+      "main": [
+        [
+          {
+            "node": "Check Past ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Past ID": {
+      "main": [
+        [
+          {
+            "node": "ID KH Chưa Được Add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ID KH Chưa Được Add": {
+      "main": [
+        [
+          {
+            "node": "Add Thông Tin KH vào Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Không phải do Fanpage Rep?": {
+      "main": [
+        [
+          {
+            "node": "Kiểm Tra Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check  Human",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm Tra Whitelist": {
+      "main": [
+        [
+          {
+            "node": "KH Này Không Ở Trong Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KH Này Không Ở Trong Whitelist": {
+      "main": [
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3331c483-168f-47d1-a7cb-0f153e46aaa4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6d61497b578f9fa268e2c626f3da87bcbe795259ad06a17419fe0c7f7c72f4a"
+  },
+  "id": "dc7efibJDzEGlhdX",
+  "tags": []
+}
